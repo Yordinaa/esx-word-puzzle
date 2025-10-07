@@ -21,6 +21,16 @@ function PuzzleGame() {
   // Initialize game with a random word
   useEffect(() => {
     startNewGame();
+    
+    // Load saved stats from localStorage
+    const savedWins = Number(localStorage.getItem("esx_wins") || 0);
+    const savedMaxStreak = Number(localStorage.getItem("esx_max_streak") || 0);
+    
+    setGameState(prev => ({
+      ...prev,
+      wins: savedWins,
+      maxStreak: savedMaxStreak
+    }));
   }, []);
 
   const startNewGame = () => {
@@ -40,7 +50,7 @@ function PuzzleGame() {
 
   // Check win/lose conditions
   useEffect(() => {
-    if (!gameState.currentWord) return;
+    if (!gameState.currentWord || gameState.status !== 'playing') return;
     
     const { word } = gameState.currentWord;
     const uniqueLetters = new Set(word.replace(/[^A-Z]/g, "").split(""));
@@ -50,29 +60,44 @@ function PuzzleGame() {
     
     const isLost = gameState.wrongGuesses.size >= MAX_WRONG_GUESSES;
     
-    if (isWon) {
-      const newWins = gameState.wins + 1;
-      const newStreak = gameState.currentStreak + 1;
-      const newMaxStreak = Math.max(gameState.maxStreak, newStreak);
-      
-      localStorage.setItem("esx_wins", newWins);
-      localStorage.setItem("esx_max_streak", newMaxStreak);
-      
-      setGameState(prev => ({
-        ...prev,
-        status: "won",
-        wins: newWins,
-        currentStreak: newStreak,
-        maxStreak: newMaxStreak
-      }));
-    } else if (isLost) {
-      setGameState(prev => ({
-        ...prev,
-        status: "lost",
-        currentStreak: 0
-      }));
+    if (isWon || isLost) {
+      setGameState(prev => {
+        if (isWon) {
+          // When winning:
+          // 1. Increment total wins by 1
+          // 2. Increment current streak by 1
+          // 3. Update max streak if current streak is higher
+          const newWins = prev.wins + 1;
+          const newCurrentStreak = prev.currentStreak + 1;
+          const newMaxStreak = Math.max(prev.maxStreak, newCurrentStreak);
+          
+          // Save to localStorage
+          localStorage.setItem("esx_wins", newWins);
+          localStorage.setItem("esx_max_streak", newMaxStreak);
+          
+          return {
+            ...prev,
+            status: "won",
+            wins: newWins,
+            currentStreak: newCurrentStreak,
+            maxStreak: newMaxStreak
+          };
+        } else {
+          // When losing:
+          // 1. Keep total wins the same
+          // 2. Reset current streak to 0
+          // 3. Keep max streak as is
+          localStorage.setItem("esx_max_streak", prev.maxStreak);
+          
+          return {
+            ...prev,
+            status: "lost",
+            currentStreak: 0
+          };
+        }
+      });
     }
-  }, [gameState.guessed, gameState.wrongGuesses, gameState.currentWord, gameState.wins, gameState.currentStreak, gameState.maxStreak]);
+  }, [gameState.guessed, gameState.wrongGuesses, gameState.currentWord, gameState.status]);
 
   // Keyboard support
   useEffect(() => {
