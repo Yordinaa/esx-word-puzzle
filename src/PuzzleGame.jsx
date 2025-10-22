@@ -25,7 +25,8 @@ function PuzzleGame() {
     showHint: false,
     wins: Number(localStorage.getItem("esx_wins") || 0),
     currentStreak: 0,
-    maxStreak: Number(localStorage.getItem("esx_max_streak") || 0)
+    maxStreak: Number(localStorage.getItem("esx_max_streak") || 0),
+    skipped: Number(localStorage.getItem("esx_skipped") || 0)
   });
 
   const shuffledWords = useRef(null);
@@ -70,7 +71,9 @@ function PuzzleGame() {
       guessed: new Set(),
       wrongGuesses: new Set(),
       status: "playing",
-      showHint: false
+      showHint: false,
+      // Reset skipped count if we're not in the middle of a game
+      ...(gameState.status === 'playing' ? {} : { skipped: prev.skipped })
     }));
   };
 
@@ -160,6 +163,24 @@ function PuzzleGame() {
     }));
   };
 
+  const handleSkip = () => {
+    // Save the updated skipped count to localStorage
+    const newSkipped = gameState.skipped + 1;
+    localStorage.setItem("esx_skipped", newSkipped);
+    
+    // Update state and move to next word
+    setGameState(prev => ({
+      ...prev,
+      skipped: newSkipped
+    }));
+    
+    startNewGame();
+  };
+
+  const handlePlayAgain = () => {
+    startNewGame();
+  };
+
   const toggleHint = () => {
     setGameState(prev => ({
       ...prev,
@@ -220,9 +241,28 @@ function PuzzleGame() {
           )}
         </div>
         
+        {/* Game Controls */}
+        <div className="flex gap-2 justify-center mt-4">
+          {status !== "playing" ? (
+            <button
+              onClick={handlePlayAgain}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Play Again
+            </button>
+          ) : (
+            <button
+              onClick={handleSkip}
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            >
+              Skip Word
+            </button>
+          )}
+        </div>
+
         {/* Game Over Message */}
         {status !== "playing" && (
-          <div className="p-4 mt-6 text-center rounded-md">
+          <div className="p-4 mt-4 text-center rounded-md">
             <p className={`text-xl font-bold mb-4 ${
               status === "won" ? "text-green-600" : "text-red-600"
             }`}>
@@ -230,17 +270,11 @@ function PuzzleGame() {
                 ? "🎉 Congratulations! You won! 🎉" 
                 : `Game Over! The word was: ${currentWord.word}`}
             </p>
-            <button
-              onClick={startNewGame}
-              className="px-6 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Play Again (Press Enter)
-            </button>
           </div>
         )}
         
         <div className="mt-4 text-xs text-center text-gray-400">
-          <p>Press keyboard letters to guess | Press H for hint</p>
+          <p>Press keyboard letters to guess | Press H for hint | Words skipped: {gameState.skipped}</p>
         </div>
       </div>
     </div>
