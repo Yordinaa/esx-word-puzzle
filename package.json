@@ -13,6 +13,7 @@
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",
     "fs": "^0.0.1-security",
+    "mongoose": "^8.19.2",
     "node-fetch": "^3.3.2",
     "openai": "^6.6.0",
     "react": "^19.1.1",
