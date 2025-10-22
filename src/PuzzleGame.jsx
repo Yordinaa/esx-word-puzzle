@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import HangmanFigure from "./components/hangman-figure.jsx";
 import Letters from "./components/Letters";
 import Output from "./components/Output";
 import words from "./components/words";
+
+// Fisher-Yates shuffle algorithm
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 const MAX_WRONG_GUESSES = 6;
 
@@ -18,8 +28,16 @@ function PuzzleGame() {
     maxStreak: Number(localStorage.getItem("esx_max_streak") || 0)
   });
 
-  // Initialize game with a random word
+  const shuffledWords = useRef(null);
+  const currentWordIndex = useRef(-1);
+
+  // Initialize game with shuffled words
   useEffect(() => {
+    // Only shuffle words once when component mounts
+    if (!shuffledWords.current) {
+      shuffledWords.current = shuffleArray([...words]);
+    }
+    
     startNewGame();
     
     // Load saved stats from localStorage
@@ -34,9 +52,17 @@ function PuzzleGame() {
   }, []);
 
   const startNewGame = () => {
-    const randomIndex = Math.floor(Math.random() * words.length);
-    const word = words[randomIndex].word.toUpperCase();
-    const hint = words[randomIndex].hint;
+    // Move to next word, reshuffle if we've gone through all words
+    currentWordIndex.current = (currentWordIndex.current + 1) % words.length;
+    
+    // If we've looped back to the start, reshuffle for next time
+    if (currentWordIndex.current === 0) {
+      shuffledWords.current = shuffleArray([...words]);
+    }
+    
+    const currentWordObj = shuffledWords.current[currentWordIndex.current];
+    const word = currentWordObj.word.toUpperCase();
+    const hint = currentWordObj.hint;
     
     setGameState(prev => ({
       ...prev,
