@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Word from "../models/word.js";
-import words from "../components/words.jsx";
+import words from "../components/words.js";
 
 
 const uri = "mongodb+srv://Eyob:%2314%40eyob@wordpuzzle.to1irl3.mongodb.net/?retryWrites=true&w=majority&appName=WordPuzzle";

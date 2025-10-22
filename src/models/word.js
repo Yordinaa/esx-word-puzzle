@@ -5,4 +5,5 @@ const wordSchema = new mongoose.Schema({
   hint: { type: String, required: true }
 });
 
-export default mongoose.model("Word", wordSchema);
+const Word = mongoose.model("Word", wordSchema);
+export default Word;

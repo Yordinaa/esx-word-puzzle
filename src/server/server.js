@@ -1,7 +1,21 @@
-import mongoose from "mongoose";
+import express from "express";
+import Word from "../models/word.js"; 
 
+const app = express();
 
+app.use(express.json());
 
-mongoose.connect("mongodb+srv://Eyob:%2314%40eyob@wordpuzzle.to1irl3.mongodb.net/?retryWrites=true&w=majority&appName=WordPuzzle")
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => console.error("❌ MongoDB connection error:", err));
+app.get("/api/word", async (req, res) => {
+  try {
+    const count = await Word.countDocuments();
+    const random = Math.floor(Math.random() * count);
+    const word = await Word.findOne().skip(random);
+    res.json(word);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch word" });
+  }
+});
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
