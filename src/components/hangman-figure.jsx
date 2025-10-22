@@ -29,7 +29,7 @@ const HangmanFigure = ({ wrongGuesses }) => {
       
       {/* Left Arm */}
       {errors > 2 && (
-        <div className="absolute top-24 right-6 w-10 h-2 bg-gray-800 transform -rotate-45 origin-right"></div>
+        <div className="absolute top-24 right-6 w-10 h-2 bg-gray-800 transform -rotate-45 origin-center"></div>
       )}
       
       {/* Right Arm */}

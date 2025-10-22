@@ -31,3 +31,4 @@ export default [
   {word: "Capital", hint: "Financial assets or resources available for investment"},
   {word: "Risk", hint: "Possibility of financial loss in investment"},
 ];
+
