@@ -145,12 +145,12 @@ function PuzzleGame() {
 
   if (!currentWord) return <div className="loading">Loading game...</div>;
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
-        <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">ESX Word Puzzle</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+      <div className="w-full max-w-2xl p-6 bg-white rounded-lg shadow-lg">
+        <h1 className="mb-6 text-3xl font-bold text-center text-blue-600">ESX Word Puzzle</h1>
         
         {/* Game Status */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="text-lg">
             <span className="font-semibold">Wins:</span> {wins}
           </div>
@@ -185,18 +185,18 @@ function PuzzleGame() {
         <div className="mb-6 text-center">
           <button 
             onClick={toggleHint}
-            className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors"
+            className="px-4 py-2 text-yellow-800 transition-colors bg-yellow-100 rounded hover:bg-yellow-200"
           >
             {showHint ? 'Hide Hint' : 'Show Hint (H)'}
           </button>
           {showHint && (
-            <p className="mt-2 text-gray-700 italic">{currentWord.hint}</p>
+            <p className="mt-2 italic text-gray-700">{currentWord.hint}</p>
           )}
         </div>
         
         {/* Game Over Message */}
         {status !== "playing" && (
-          <div className="mt-6 p-4 text-center rounded-md">
+          <div className="p-4 mt-6 text-center rounded-md">
             <p className={`text-xl font-bold mb-4 ${
               status === "won" ? "text-green-600" : "text-red-600"
             }`}>
@@ -206,15 +206,15 @@ function PuzzleGame() {
             </p>
             <button
               onClick={startNewGame}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
             >
               Play Again (Press Enter)
             </button>
           </div>
         )}
         
-        <div className="mt-4 text-xs text-gray-400 text-center">
-          <p>Press keyboard letters to guess | Press H for hint | Add more words in <code className="bg-gray-100 px-1 rounded">src/components/words.js</code></p>
+        <div className="mt-4 text-xs text-center text-gray-400">
+          <p>Press keyboard letters to guess | Press H for hint</p>
         </div>
       </div>
     </div>
