@@ -1,13 +1,11 @@
 {
   "version": 2,
   "builds": [
-    { "src": "src/server/server.js", "use": "@vercel/node" },
-    { "src": "package.json", "use": "@vercel/static-build" },
-    {"buildCommand": "npm run run dev && node src/server/server.js"}
-
+    { "src": "vite.config.js", "use": "@vercel/node" },
+    { "src": "api**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "src/server/server.js" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/" }
   ]
 
