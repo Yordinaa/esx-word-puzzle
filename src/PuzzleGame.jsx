@@ -5,9 +5,7 @@ import Output from "./components/Output";
 
 const MAX_WRONG_GUESSES = 6;
 
-const API_URL = "https://wordpuzzle-backend-production.up.railway.app";
-
-
+const API_URL = "https://wordpuzzle-backend-production.up.railway.app/wordbatch";
 
 // 
 // Fisher-Yates shuffle
@@ -40,7 +38,7 @@ function PuzzleGame() {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/wordbatch`); // backend route for multiple words
+        const res = await fetch(API_URL); // Directly using the full URL
         const data = await res.json();
         wordsList.current = shuffleArray(
           data.map((w) => ({
