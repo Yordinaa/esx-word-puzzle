@@ -5,7 +5,9 @@ import Output from "./components/Output";
 
 const MAX_WRONG_GUESSES = 6;
 
-const API_URL = "https://wordpuzzle-backend-production.up.railway.app/wordbatch";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+
 
 // 
 // Fisher-Yates shuffle
@@ -38,7 +40,7 @@ function PuzzleGame() {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const res = await fetch(API_URL); // Directly using the full URL
+        const res = await fetch(`${API_URL}/api/wordbatch`); // backend route for multiple words
         const data = await res.json();
         wordsList.current = shuffleArray(
           data.map((w) => ({
@@ -170,16 +172,16 @@ function PuzzleGame() {
   if (status === "finished") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div className="max-w-md p-8 text-center bg-white rounded-lg shadow-lg">
-          <h1 className="mb-4 text-3xl font-bold text-green-600">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
+          <h1 className="text-3xl font-bold text-green-600 mb-4">
             🎉 You’ve completed all {wordsList.current.length} words! 🎉
           </h1>
-          <p className="mb-6 text-gray-600">
+          <p className="text-gray-600 mb-6">
             Fantastic job! You can restart the game to play again with reshuffled words.
           </p>
           <button
             onClick={restartGame}
-            className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Restart Game
           </button>
@@ -235,18 +237,18 @@ function PuzzleGame() {
           )}
         </div>
 
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex gap-2 justify-center mt-4">
           {status !== "playing" ? (
             <button
               onClick={startNewGame}
-              className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
               Play Again
             </button>
           ) : (
             <button
               onClick={handleSkip}
-              className="px-4 py-2 text-white bg-gray-500 rounded hover:bg-gray-600"
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
             >
               Skip Word
             </button>
@@ -272,7 +274,7 @@ function PuzzleGame() {
             Press keyboard letters to guess | Press H for hint | Words skipped:{" "}
             {skipped}
           </p>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-gray-400 text-xs">
             Word {currentWordIndex.current + 1} of {wordsList.current.length}
           </p>
         </div>
