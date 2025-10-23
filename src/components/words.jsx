@@ -113,7 +113,7 @@ export default [
   {word: "Investment Strategy", hint: "Planned approach for allocating assets to meet objectives"},
   {word: "Issuer Obligation", hint: "Legal responsibility of a company issuing securities"},
   {word: "Issuer Compliance", hint: "Adherence by issuers to regulatory and disclosure requirements"},
-  {word: "Job Creation Fund", hint: "Fund aimed at investing in projects that create employment"},
+  {word: "Job Creation", hint: "Fund aimed at investing in projects that create employment"},
   {word: "Joint Liability", hint: "Shared financial responsibility among multiple parties"},
   {word: "Judgment Credit Risk", hint: "Risk of loss from a court ruling affecting financial assets"},
   {word: "Junior Bond", hint: "Bond with lower priority in repayment in case of default"},
