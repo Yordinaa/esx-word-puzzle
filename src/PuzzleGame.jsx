@@ -26,12 +26,13 @@ function PuzzleGame() {
     currentWord: null,
     guessed: new Set(),
     wrongGuesses: new Set(),
-    status: "loading", // loading | playing | won | lost | finished
+    status: "loading", // loading | playing | won | lost | finished | error
     showHint: false,
     wins: Number(localStorage.getItem("esx_wins") || 0),
     currentStreak: Number(localStorage.getItem("esx_current_streak") || 0),
     maxStreak: Number(localStorage.getItem("esx_max_streak") || 0),
     skipped: Number(localStorage.getItem("esx_skipped") || 0),
+    error: null, // Store error message if any
   });
 
   const wordsList = useRef([]);
@@ -54,14 +55,12 @@ function PuzzleGame() {
             url: res.url,
             response: errorText
           });
-          throw new Error(`HTTP error! status: ${res.status}`);
         }
+
+        const data = await response.json();
         
-        const data = await res.json();
-        console.log('API Response:', data);
-        
-        if (!Array.isArray(data)) {
-          throw new Error('Expected an array of words from the API');
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error('No valid words received from the API');
         }
         
         wordsList.current = shuffleArray(
@@ -71,22 +70,20 @@ function PuzzleGame() {
           })).filter(w => w.word) // Filter out any invalid words
         );
         
-        if (wordsList.current.length === 0) {
-          throw new Error('No valid words received from the API');
-        }
-        
         currentWordIndex.current = -1;
         startNewGame();
       } catch (err) {
         console.error("Failed to fetch words:", err);
-        // Fallback to some default words if the API fails
-        wordsList.current = shuffleArray([
-          { word: 'REACT', hint: 'A JavaScript library for building user interfaces' },
-          { word: 'VITE', hint: 'Next Generation Frontend Tooling' },
-          { word: 'JAVASCRIPT', hint: 'The programming language of the web' }
-        ]);
-        currentWordIndex.current = -1;
-        startNewGame();
+        // Show a user-friendly error message
+        alert('Failed to connect to the word server. Please check your internet connection and try again later.');
+        // Set the game to a proper error state
+        setGameState(prev => ({
+          ...prev,
+          status: 'error',
+          error: 'Failed to load words. Please try again later.'
+        }));
+        // Don't re-throw to prevent uncaught promise warnings
+        return;
       }
     };
     fetchWords();
@@ -201,10 +198,26 @@ function PuzzleGame() {
 
   const { currentWord, guessed, wrongGuesses, status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
 
-  if (status === "loading") return <div className="loading">Loading game...</div>;
+  if (gameState.status === "loading") {
+    return <div className="text-center p-8">Loading words...</div>;
+  }
 
-  // ✅ All words completed
-  if (status === "finished") {
+  if (gameState.status === "error") {
+    return (
+      <div className="text-center p-8">
+        <div className="text-red-500 text-lg font-bold mb-4">Error Loading Game</div>
+        <p className="mb-4">{gameState.error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (gameState.status === "finished") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
