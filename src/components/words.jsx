@@ -91,7 +91,7 @@ export default [
   { word: "Hurdle Rate", hint: "Minimum rate of return an investment must achieve before profits/fees apply." },
   { word: "Holding Company", hint: "A business entity that owns enough voting stock in another company to control it." },
   { word: "Headline Inflation", hint: "Overall inflation rate including all items; important because inflation impacts interest rates and bond markets." },
-  { word: "High‑Frequency Trading", hint: "Algorithmic trading with very short holding periods, high turnover in securities markets." },
+  { word: "HFT", hint: "Algorithmic trading with very short holding periods, high turnover in securities markets." },
   { word: "Hard Capital Rationing", hint: "When a firm cannot raise external capital beyond a fixed budget constraint; influences issuance in capital markets." },
   { word: "Haircut", hint: "The difference between the market value of a security and the value ascribed to it for collateral or lending." },
   { word: "Head and Shoulder", hint: "A technical‑analysis formation in equity/trading markets signaling potential trend reversal." },
