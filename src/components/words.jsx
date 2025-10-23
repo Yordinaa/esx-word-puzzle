@@ -106,7 +106,7 @@ export default [
   {word: "Insolvency Risk", hint: "Risk that a company cannot meet its financial obligations"},
   {word: "Institutional Funding", hint: "Investment capital provided by large organizations or institutions"},
   {word: "Interest Rate Swap", hint: "Contract exchanging fixed interest payments for floating ones"},
-  {word: "Internal Rate of Return", hint: "Expected annualized return of an investment"},
+  {word: "IRR", hint: "Expected annualized return of an investment"},
   {word: "International Securities", hint: "Financial instruments traded across countries"},
   {word: "Investment Horizon", hint: "Time period an investor plans to hold an asset"},
   {word: "Investment Income", hint: "Returns earned from investments, such as dividends or interest"},
