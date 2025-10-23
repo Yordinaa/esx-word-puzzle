@@ -6,9 +6,9 @@ import Output from "./components/Output";
 const MAX_WRONG_GUESSES = 6;
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-const API_PREFIX = import.meta.env.DEV ? '/api' : '';
-
-
+  // In production, we don't need a prefix because Vercel handles the routing
+  // In development, we use the full path including /api
+  const API_PREFIX = import.meta.env.DEV ? '/api' : '/api';
 
 // 
 // Fisher-Yates shuffle
