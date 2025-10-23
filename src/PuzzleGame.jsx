@@ -36,7 +36,7 @@ function PuzzleGame() {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const res = await fetch("api/wordbatch"); // backend route for multiple words
+        const res = await fetch("/api/wordbatch"); // backend route for multiple words
         const data = await res.json();
         wordsList.current = shuffleArray(
           data.map((w) => ({
