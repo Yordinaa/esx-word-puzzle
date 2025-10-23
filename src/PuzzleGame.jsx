@@ -5,6 +5,10 @@ import Output from "./components/Output";
 
 const MAX_WRONG_GUESSES = 6;
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+
+
 // 
 // Fisher-Yates shuffle
 const shuffleArray = (array) => {
@@ -36,7 +40,7 @@ function PuzzleGame() {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const res = await fetch("/api/wordbatch"); // backend route for multiple words
+        const res = await fetch(`${API_URL}/api/wordbatch`); // backend route for multiple words
         const data = await res.json();
         wordsList.current = shuffleArray(
           data.map((w) => ({

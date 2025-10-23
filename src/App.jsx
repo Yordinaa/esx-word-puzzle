@@ -1,5 +1,5 @@
 import React from 'react';
-import PuzzleGame from "./PuzzleGame.jsx";
+import PuzzleGame from "./PuzzleGame";
 import './index.css';
 
 function App() {
