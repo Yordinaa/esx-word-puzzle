@@ -102,7 +102,7 @@ export default [
   {word: "Index", hint: "A statistical measure of market performance"},
   {word: "Liquidity Adjustment", hint: "Modification to account for the ease of converting assets to cash"},
   {word: "Income Yield", hint: "Earnings from an investment as a percentage of its cost or market value"},
-  {word: "Inflation-Linked Bond", hint: "Bond where principal and interest adjust with inflation"},
+  {word: "Inflation-Linked", hint: "Bond where principal and interest adjust with inflation"},
   {word: "Insolvency Risk", hint: "Risk that a company cannot meet its financial obligations"},
   {word: "Institutional Funding", hint: "Investment capital provided by large organizations or institutions"},
   {word: "Interest Rate Swap", hint: "Contract exchanging fixed interest payments for floating ones"},
