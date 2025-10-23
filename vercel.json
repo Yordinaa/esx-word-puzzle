@@ -17,11 +17,11 @@
       }
     },
     {
-      "src": "/api/(.*)",
-      "dest": "https://wordpuzzle-backend-production.up.railway.app/$1",
+      "src": "/wordbatch",
+      "dest": "https://wordpuzzle-backend-production.up.railway.app/wordbatch",
       "headers": {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization"
       }
     },

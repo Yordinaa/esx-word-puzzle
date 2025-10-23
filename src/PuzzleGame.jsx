@@ -41,18 +41,52 @@ function PuzzleGame() {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const res = await fetch(`${API_URL}${API_PREFIX}/wordbatch`); // backend route for multiple words
+        const url = `${API_URL}${API_PREFIX}/wordbatch`;
+        console.log('Fetching words from:', url);
+        
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('API Error:', {
+            status: res.status,
+            statusText: res.statusText,
+            url: res.url,
+            response: errorText
+          });
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
+        console.log('API Response:', data);
+        
+        if (!Array.isArray(data)) {
+          throw new Error('Expected an array of words from the API');
+        }
+        
         wordsList.current = shuffleArray(
           data.map((w) => ({
-            word: w.word.toUpperCase(),
-            hint: w.hint,
-          }))
+            word: w.word?.toUpperCase() || '',
+            hint: w.hint || '',
+          })).filter(w => w.word) // Filter out any invalid words
         );
+        
+        if (wordsList.current.length === 0) {
+          throw new Error('No valid words received from the API');
+        }
+        
         currentWordIndex.current = -1;
         startNewGame();
       } catch (err) {
         console.error("Failed to fetch words:", err);
+        // Fallback to some default words if the API fails
+        wordsList.current = shuffleArray([
+          { word: 'REACT', hint: 'A JavaScript library for building user interfaces' },
+          { word: 'VITE', hint: 'Next Generation Frontend Tooling' },
+          { word: 'JAVASCRIPT', hint: 'The programming language of the web' }
+        ]);
+        currentWordIndex.current = -1;
+        startNewGame();
       }
     };
     fetchWords();
