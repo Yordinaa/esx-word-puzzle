@@ -119,7 +119,6 @@ export default [
   {word: "Junior Bond", hint: "Bond with lower priority in repayment in case of default"},
   {word: "Key Account Risk", hint: "Risk of losing major clients or investors"},
   {word: "Key Rate Duration", hint: "Measure of bond sensitivity to interest rate changes"},
-  {word: "Knowledge Economy Index", hint: "Metric measuring a country’s innovation and knowledge capability"},
   {word: "Labor Cost Ratio", hint: "Proportion of total costs spent on labor"},
   {word: "Large Cap Stock", hint: "Stock of a company with high market capitalization"},
   {word: "Last Trading Day", hint: "Final day to trade a security before settlement or expiration"},
