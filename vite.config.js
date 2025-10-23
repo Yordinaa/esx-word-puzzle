@@ -11,8 +11,7 @@ export default defineConfig({
       '/api': {
         target: 'https://wordpuzzle-backend-production.up.railway.app',
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: false
       }
     }
   },
