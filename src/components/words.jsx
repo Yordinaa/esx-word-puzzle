@@ -115,7 +115,7 @@ export default [
   {word: "Issuer Compliance", hint: "Adherence by issuers to regulatory and disclosure requirements"},
   {word: "Job Creation", hint: "Fund aimed at investing in projects that create employment"},
   {word: "Joint Liability", hint: "Shared financial responsibility among multiple parties"},
-  {word: "Judgment Credit Risk", hint: "Risk of loss from a court ruling affecting financial assets"},
+  {word: "Judgment Credit", hint: "Risk of loss from a court ruling affecting financial assets"},
   {word: "Junior Bond", hint: "Bond with lower priority in repayment in case of default"},
   {word: "Key Account Risk", hint: "Risk of losing major clients or investors"},
   {word: "Key Rate Duration", hint: "Measure of bond sensitivity to interest rate changes"},
