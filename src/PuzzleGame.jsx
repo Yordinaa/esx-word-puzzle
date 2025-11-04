@@ -113,7 +113,7 @@ function PuzzleGame() {
       guessed: new Set(),
       wrongGuesses: new Set(),
       status: "playing",
-      showHint: false,
+      showHint: true, // Show hint automatically when a new word appears
     }));
   };
 
