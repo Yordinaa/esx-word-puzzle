@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import HangmanFigure from "./components/hangman-figure.jsx";
 import Letters from "./components/Letters";
 import Output from "./components/Output";
+import Leaderboard from './Leaderboard';
 
 const MAX_WRONG_GUESSES = 6;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -32,6 +33,7 @@ function PuzzleGame() {
     skipped: Number(localStorage.getItem("esx_skipped") || 0),
   });
  
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [user, setUser] = useState({
   username: localStorage.getItem("username") || "",
   userId: localStorage.getItem("userId") || "",
@@ -552,6 +554,9 @@ const fetchUserScore = async (userId) => {
           </p>
         </div>
       </div>
+      <div className="w-full max-w-2xl mt-8">
+  <Leaderboard />
+</div>
     </div>
   );
 }
