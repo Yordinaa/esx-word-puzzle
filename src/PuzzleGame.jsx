@@ -35,6 +35,7 @@ function PuzzleGame() {
   const [user, setUser] = useState({
   username: localStorage.getItem("username") || "",
   userId: localStorage.getItem("userId") || "",
+  score: Number(localStorage.getItem("wins") || 0),
 });
   const [tempName, setTempName] = useState("");
 
@@ -54,7 +55,8 @@ function PuzzleGame() {
     const data = await res.json();
     localStorage.setItem("username", data.username);
     localStorage.setItem("userId", data.userId);
-    setUser({ username: data.username, userId: data.userId });
+    localStorage.setItem("wins", data.uscore);
+    setUser({ username: data.username, userId: data.userId, score: data.uscore});
   };
 
 
