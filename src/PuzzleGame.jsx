@@ -4,14 +4,10 @@ import Letters from "./components/Letters";
 import Output from "./components/Output";
 
 const MAX_WRONG_GUESSES = 6;
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-  // In production, we don't need a prefix because Vercel handles the routing
-  // In development, we use the full path including /api
-  const API_PREFIX = import.meta.env.DEV ? '/api' : '/api';
+const API_PREFIX = import.meta.env.DEV ? '/api' : '/api';
 
-// 
-// Fisher-Yates shuffle
+// Fisher-Yates shuffle"
 const shuffleArray = (array) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -22,12 +18,13 @@ const shuffleArray = (array) => {
 };
 
 function PuzzleGame() {
+  const [difficulty, setDifficulty] = useState('beginner'); // Add difficulty state
   const [gameState, setGameState] = useState({
     currentWord: null,
     guessed: new Set(),
     wrongGuesses: new Set(),
     status: "loading", // loading | playing | won | lost | finished
-    showHint: false,
+    showHint: true, // Show hints by default
     wins: Number(localStorage.getItem("esx_wins") || 0),
     currentStreak: Number(localStorage.getItem("esx_current_streak") || 0),
     maxStreak: Number(localStorage.getItem("esx_max_streak") || 0),
@@ -37,93 +34,177 @@ function PuzzleGame() {
   const wordsList = useRef([]);
   const currentWordIndex = useRef(-1);
 
-  // ✅ Fetch all words once
-  useEffect(() => {
-    const fetchWords = async () => {
-      try {
-        const url = `${API_URL}${API_PREFIX}/wordbatch`;
-        console.log('Fetching words from:', url);
-        
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error('API Error:', {
-            status: res.status,
-            statusText: res.statusText,
-            url: res.url,
-            response: errorText
-          });
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        const data = await res.json();
-        console.log('API Response:', data);
-        
-        if (!Array.isArray(data)) {
-          throw new Error('Expected an array of words from the API');
-        }
-        
-        wordsList.current = shuffleArray(
-          data.map((w) => ({
-            word: w.word?.toUpperCase() || '',
-            hint: w.hint || '',
-          })).filter(w => w.word) // Filter out any invalid words
-        );
-        
-        if (wordsList.current.length === 0) {
-          throw new Error('No valid words received from the API');
-        }
-        
-        currentWordIndex.current = -1;
-        startNewGame();
-      } catch (err) {
-        console.error("Failed to fetch words:", err);
-        // Fallback to some default words if the API fails
-        wordsList.current = shuffleArray([
-          { word: 'REACT', hint: 'A JavaScript library for building user interfaces' },
-          { word: 'VITE', hint: 'Next Generation Frontend Tooling' },
-          { word: 'JAVASCRIPT', hint: 'The programming language of the web' }
-        ]);
-        currentWordIndex.current = -1;
-        startNewGame();
+  // Fetch words based on selected difficulty
+  const fetchWords = useRef(async () => {
+    try {
+      // Log the difficulty being used
+      console.log('Selected difficulty:', difficulty);
+      
+      const url = `${API_URL}${API_PREFIX}/wordbatch?difficulty=${encodeURIComponent(difficulty)}`;
+      console.log('Fetching words from:', url);
+      
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API Error:', {
+          status: res.status,
+          statusText: res.statusText,
+          errorText,
+          url,
+        });
+        throw new Error(`HTTP error! status: ${res.status}: ${errorText}`);
       }
-    };
-    fetchWords();
-  }, []);
+      
+      const data = await res.json();
+      console.log('API Response:', { 
+        dataCount: data.length,
+        status: res.status, 
+        ok: res.ok,
+        difficulty,
+        url
+      });
+      
+      if (!Array.isArray(data)) {
+        console.error('API did not return an array:', data);
+        throw new Error('Expected an array of words from the API');
+      }
+      
+      // Log the first few words to verify difficulty
+      console.log('Sample words:', data.slice(0, 3).map(w => ({
+        word: w.word,
+        difficulty: w.difficulty,
+        length: w.word.length
+      })));
+      
+      // Just ensure word and hint exist, no additional filtering
+      const wordsToUse = data.filter(w => w && w.word && w.hint);
+      
+      // Process the words
+      const finalWords = wordsToUse
+        .filter(w => w && w.word && w.hint)
+        .map(w => {
+          const wordObj = {
+            word: String(w.word).toUpperCase().trim(),
+            hint: String(w.hint).trim()
+          };
+          console.log('Processing word:', wordObj);
+          return wordObj;
+        });
+
+      if (finalWords.length === 0) {
+        throw new Error('No valid words received from the API');
+      }
+      
+      wordsList.current = shuffleArray(finalWords);
+      currentWordIndex.current = -1;
+      startNewGame();
+    } catch (err) {
+      console.error("Failed to fetch words:", err);
+      setGameState(prev => ({ ...prev, status: "error", error: err.message }));
+    }
+  });
+
+  // Load words when component mounts or difficulty changes
+  useEffect(() => {
+    setGameState(prev => ({ ...prev, status: "loading" }));
+    fetchWords.current();
+    // Add difficulty to the dependency array to refetch when it changes
+  }, [difficulty]);
 
   const startNewGame = () => {
-    if (!wordsList.current.length) return;
-
-    // ✅ Check if all words have been played
+    console.log('Starting new game with words list:', wordsList.current);
+    console.log('Current word index before increment:', currentWordIndex.current);
+    
+    if (!wordsList.current || !Array.isArray(wordsList.current) || wordsList.current.length === 0) {
+      const errorMsg = 'No words available for the selected difficulty level';
+      console.error(errorMsg, { wordsList: wordsList.current });
+      setGameState(prev => ({ 
+        ...prev, 
+        status: "error",
+        error: errorMsg 
+      }));
+      return;
+    }
+    
+    // Check if we've reached the end of the word list
     if (currentWordIndex.current + 1 >= wordsList.current.length) {
-      setGameState((prev) => ({
+      console.log('Resetting word index, reached end of words list');
+      currentWordIndex.current = -1;
+      
+      // If we've gone through all words, mark as finished
+      setGameState(prev => ({
         ...prev,
         status: "finished",
       }));
       return;
     }
-
+    
+    // Move to the next word
     currentWordIndex.current += 1;
     const currentWordObj = wordsList.current[currentWordIndex.current];
+    
+    if (!currentWordObj) {
+      console.error('Invalid word object at index:', currentWordIndex.current);
+      return;
+    }
+    
+    console.log('Setting up new game with word:', currentWordObj);
+
+    console.log('Setting up game with word:', currentWordObj);
+    
+    // Ensure we have a valid word object
+    if (!currentWordObj || !currentWordObj.word) {
+      console.error('Invalid word object:', currentWordObj);
+      setGameState(prev => ({
+        ...prev,
+        status: "error",
+        error: 'Failed to load word. Please try again.'
+      }));
+      return;
+    }
 
     setGameState((prev) => ({
       ...prev,
-      currentWord: currentWordObj,
+      currentWord: {
+        word: String(currentWordObj.word).toUpperCase().trim(),
+        hint: String(currentWordObj.hint || '').trim()
+      },
       guessed: new Set(),
       wrongGuesses: new Set(),
       status: "playing",
-      showHint: true, // Show hint automatically when a new word appears
+      showHint: true, // Show hint by default
     }));
   };
 
-  const restartGame = () => {
-    wordsList.current = shuffleArray(wordsList.current);
-    currentWordIndex.current = -1;
+  const handleGuess = (letter) => {
+    if (gameState.status !== "playing" || !gameState.currentWord) return;
+
+    const { word } = gameState.currentWord;
+    const isCorrect = word.includes(letter);
+
+    setGameState((prev) => ({
+      ...prev,
+      guessed: isCorrect ? new Set([...prev.guessed, letter]) : prev.guessed,
+      wrongGuesses: !isCorrect ? new Set([...prev.wrongGuesses, letter]) : prev.wrongGuesses,
+    }));
+  };
+
+  const handleSkip = () => {
+    const newSkipped = gameState.skipped + 1;
+    localStorage.setItem("esx_skipped", newSkipped);
+    setGameState((prev) => ({ ...prev, skipped: newSkipped }));
     startNewGame();
   };
 
-  // ✅ Check win/loss
+  const toggleHint = () =>
+    setGameState((prev) => ({ ...prev, showHint: !prev.showHint }));
+
+  // Check win/loss conditions
   useEffect(() => {
     if (!gameState.currentWord || gameState.status !== "playing") return;
 
@@ -152,170 +233,218 @@ function PuzzleGame() {
           };
         } else {
           localStorage.setItem("esx_current_streak", 0);
-          return { ...prev, status: "lost", currentStreak: 0 };
+          return { 
+            ...prev, 
+            status: "lost", 
+            currentStreak: 0,
+            showHint: true // Show the correct word when lost
+          };
         }
       });
     }
-  }, [gameState.guessed, gameState.wrongGuesses, gameState.currentWord, gameState.status]);
-
-  // ✅ Keyboard support
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (gameState.status === "finished" && e.key === "Enter") restartGame();
-      if (gameState.status !== "playing") {
-        if (e.key === "Enter") startNewGame();
-        return;
-      }
-
-      const key = e.key.toUpperCase();
-      if (/^[A-Z]$/.test(key)) handleGuess(key);
-      if (key === "H") toggleHint();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameState.status]);
-
-  const handleGuess = (letter) => {
-    if (gameState.status !== "playing" || !gameState.currentWord) return;
-
-    const { word } = gameState.currentWord;
-    const isCorrect = word.includes(letter);
-
-    setGameState((prev) => ({
-      ...prev,
-      guessed: isCorrect ? new Set([...prev.guessed, letter]) : prev.guessed,
-      wrongGuesses: !isCorrect ? new Set([...prev.wrongGuesses, letter]) : prev.wrongGuesses,
-    }));
-  };
-
-  const handleSkip = () => {
-    const newSkipped = gameState.skipped + 1;
-    localStorage.setItem("esx_skipped", newSkipped);
-    setGameState((prev) => ({ ...prev, skipped: newSkipped }));
-    startNewGame();
-  };
-
-  const toggleHint = () =>
-    setGameState((prev) => ({ ...prev, showHint: !prev.showHint }));
+  }, [gameState]);
 
   const { currentWord, guessed, wrongGuesses, status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
 
-  if (status === "loading") return <div className="loading">Loading game...</div>;
+  // Debug info
+  console.log('Current game state:', {
+    status,
+    currentWord: gameState.currentWord,
+    wordsListLength: wordsList.current?.length,
+    currentWordIndex: currentWordIndex.current
+  });
 
-  // ✅ All words completed
-  if (status === "finished") {
+  if (status === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
-          <h1 className="text-3xl font-bold text-green-600 mb-4">
-            🎉 You’ve completed all {wordsList.current.length} words! 🎉
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Fantastic job! You can restart the game to play again with reshuffled words.
-          </p>
-          <button
-            onClick={restartGame}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl font-semibold">Loading game...</div>
+      </div>
+    );
+  }
+  if (gameState.status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl font-semibold">Loading game...</div>
+      </div>
+    );
+  }
+  
+  if (gameState.status === "error") {
+    console.log('Rendering error state:', gameState.error);
+    return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+        <h1 className="mb-2 text-3xl font-bold text-center text-blue-600">
+        ESX Word Puzzle
+      </h1>
+      
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className="relative w-full max-w-xs">
+          <select
+            value={difficulty}
+            onChange={(e) => {
+              console.log('Difficulty changed to:', e.target.value);
+              setDifficulty(e.target.value);
+            }}
+            className="block w-full px-4 py-2 pr-8 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            Restart Game
-          </button>
+            <option value="beginner">Beginner (≤7 letters)</option>
+            <option value="intermediate">Intermediate (8-10 letters)</option>
+            <option value="advanced">Advanced (11+ letters)</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+        <p className="mb-4 text-gray-700">
+          {gameState.error || 'Failed to load words. Please try again later.'}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+        <div className="p-4 mt-4 text-sm text-left bg-gray-100 rounded">
+          <p className="font-semibold">Debug Info:</p>
+          <p>Difficulty: {difficulty}</p>
+          <p>Words Loaded: {wordsList.current.length}</p>
+          <p>Check browser console for more details.</p>
         </div>
       </div>
     );
   }
 
+  // Main game UI
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+
       <div className="w-full max-w-2xl p-6 bg-white rounded-lg shadow-lg">
-        <h1 className="mb-6 text-3xl font-bold text-center text-blue-600">
+        <h1 className="mb-2 text-3xl font-bold text-center text-blue-600">
           ESX Word Puzzle
         </h1>
-
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-lg">
-            <span className="font-semibold">Wins:</span> {wins}
+        
+        {/* Stats Section - Moved to top */}
+        <div className="flex items-center justify-between p-4 mb-6 rounded-lg bg-gray-50">
+          <div className="text-lg font-medium">
+            <span className="text-gray-600">Wins:</span> {wins}
           </div>
-          <div className="text-lg">
-            <span className="font-semibold">Current Streak:</span> {currentStreak}
-            <span className="mx-2">|</span>
-            <span className="font-semibold">Best Streak:</span> {maxStreak}
+          <div className="text-lg font-medium">
+            <span className="text-gray-600">Current Streak:</span> {currentStreak} 
+            <span className="mx-2 text-gray-300">|</span>
+            <span className="text-gray-600">Best Streak:</span> {maxStreak}
+          </div>
+        </div>
+        
+        <div className="flex flex-col items-center justify-center mb-6">
+          <div className="relative w-full max-w-xs">
+            <select
+              id="difficulty"
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="block w-full px-4 py-2 pr-10 text-base border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <HangmanFigure wrongGuesses={wrongGuesses.size} />
-        </div>
-
-        <div className="mb-8 text-center">
-          <Output word={currentWord.word} guessed={guessed} />
-        </div>
-
-        <div className="mb-6">
-          <Letters
-            onLetterClick={handleGuess}
-            guessed={guessed}
-            wrongGuesses={wrongGuesses}
-            disabled={status !== "playing"}
-          />
-        </div>
-
-        <div className="mb-6 text-center">
-          <button
-            onClick={toggleHint}
-            className="px-4 py-2 text-yellow-800 bg-yellow-100 rounded hover:bg-yellow-200"
-          >
-            {showHint ? "Hide Hint" : "Show Hint (H)"}
-          </button>
-          {showHint && (
-            <p className="mt-2 italic text-gray-700">{currentWord.hint}</p>
-          )}
-        </div>
-
-        <div className="flex gap-2 justify-center mt-4">
-          {status !== "playing" ? (
+        {gameState.status === "finished" ? (
+          <div className="text-center">
+            <h2 className="mb-4 text-2xl font-bold text-green-600">
+              🎉 You've completed all words! 🎉
+            </h2>
             <button
               onClick={startNewGame}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
             >
               Play Again
             </button>
-          ) : (
-            <button
-              onClick={handleSkip}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-            >
-              Skip Word
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="w-full">
+            <div className="flex justify-center mb-8">
+              <HangmanFigure wrongGuesses={gameState.wrongGuesses.size} />
+            </div>
 
-        {status !== "playing" && (
-          <div className="p-4 mt-4 text-center rounded-md">
-            <p
-              className={`text-xl font-bold mb-4 ${
-                status === "won" ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {status === "won"
-                ? "🎉 Congratulations! You won! 🎉"
-                : `Game Over! The word was: ${currentWord.word}`}
-            </p>
+            <div className="w-full mb-6 text-center">
+              <Output word={gameState.currentWord?.word || ''} guessed={gameState.guessed} />
+              
+              {gameState.status === 'won' && (
+                <div className="p-3 mt-4 text-green-700 bg-green-100 rounded-md">
+                  🎉 Congratulations! You won! 🎉
+                </div>
+              )}
+              
+              {gameState.status === 'lost' && gameState.currentWord && (
+                <div className="p-3 mt-4 text-red-700 bg-red-100 rounded-md">
+                  Game Over! The word was: {gameState.currentWord.word}
+                </div>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <Letters
+                onLetterClick={handleGuess}
+                guessed={gameState.guessed}
+                wrongGuesses={gameState.wrongGuesses}
+                disabled={gameState.status !== "playing"}
+              />
+            </div>
+
+            <div className="mb-6 text-center">
+              <button
+                onClick={toggleHint}
+                className="px-4 py-2 text-yellow-800 bg-yellow-100 rounded hover:bg-yellow-200"
+              >
+                {gameState.showHint ? 'Hide Hint' : 'Show Hint (H)'}
+              </button>
+              {gameState.showHint && gameState.currentWord?.hint && (
+                <p className="mt-2 text-sm text-gray-600">
+                  <span className="font-medium">Hint:</span> {gameState.currentWord.hint}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-4 text-sm text-gray-600">
+              <div>Words Skipped: {skipped}</div>
+            </div>
+
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={gameState.status === "playing" ? handleSkip : startNewGame}
+                className={`px-4 py-2 text-white rounded ${
+                  gameState.status === "playing" 
+                    ? 'bg-gray-500 hover:bg-gray-600' 
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                {gameState.status === "playing" ? 'Skip Word' : 'New Game'}
+              </button>
+            </div>
           </div>
         )}
 
-        <div className="mt-4 text-xs text-center text-gray-400">
-          <p>
-            Press keyboard letters to guess | Press H for hint | Words skipped:{" "}
-            {skipped}
-          </p>
-          <p className="mt-1 text-gray-400 text-xs">
-            Word {currentWordIndex.current + 1} of {wordsList.current.length}
+        <div className="pt-4 mt-6 border-t border-gray-200">
+          <div className="text-sm text-center text-gray-500">
+            <p>Word {currentWordIndex.current + 1} of {wordsList.current.length}</p>
+          </div>
+          <p className="mt-2 text-xs text-center text-gray-400">
+            Press keyboard letters to guess | Press H to {showHint ? 'hide' : 'show'} hint
           </p>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default PuzzleGame;
