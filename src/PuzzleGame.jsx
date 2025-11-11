@@ -307,6 +307,40 @@ useEffect(() => {
     }
   }, [gameState,user.username, user.userId]);
 
+
+    // Keyboard event listener for letter guessing
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Only handle key presses if game is playing and user has set their name
+      if (gameState.status !== "playing" || !user.username) return;
+      
+      const key = event.key.toUpperCase();
+      
+      // Check if the key is a letter (A-Z)
+      if (/^[A-Z]$/.test(key)) {
+        handleGuess(key);
+      }
+      
+      // Add shortcut for hint toggle (H key)
+      if (key === 'H') {
+        toggleHint();
+      }
+      
+      // Add shortcut for skip/next (Spacebar or Enter)
+      if ((key === ' ' || key === 'ENTER') && gameState.status !== "playing") {
+        startNewGame();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyPress);
+    
+    // Cleanup function to remove event listener
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [gameState.status, user.username]); // Dependencies ensure proper cleanup and re-attachment
+
   const {status, showHint, currentStreak, maxStreak, skipped } = gameState;
 
   if (!user.username || !user.userId) {
