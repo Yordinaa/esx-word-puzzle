@@ -16,6 +16,8 @@ const shuffleArray = (array) => {
   return shuffled;
 };
 
+
+
 function PuzzleGame() {
   const [difficulty, setDifficulty] = useState('beginner');
   const [gameState, setGameState] = useState({
@@ -29,12 +31,96 @@ function PuzzleGame() {
     maxStreak: Number(localStorage.getItem("esx_max_streak") || 0),
     skipped: Number(localStorage.getItem("esx_skipped") || 0),
   });
+ 
+  const [user, setUser] = useState({
+  username: localStorage.getItem("username") || "",
+  userId: localStorage.getItem("userId") || "",
+});
+  const [tempName, setTempName] = useState("");
+
+
 
   const wordsList = useRef([]);
   const currentWordIndex = useRef(-1);
-  const fetchWords = useRef(null);
 
   // Handle fetching words based on difficulty
+  // Fetch words based on selected difficulty
+  const fetchWords = useRef(async () => {
+    if(!user.username || !user.userId) return;
+    try {
+      // Log the difficulty being used
+      console.log('Selected difficulty:', difficulty);
+      
+      const url = `${API_URL}${API_PREFIX}/wordbatch?difficulty=${encodeURIComponent(difficulty)}`;
+      console.log('Fetching words from:', url);
+      
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API Error:', {
+          status: res.status,
+          statusText: res.statusText,
+          errorText,
+          url,
+        });
+        throw new Error(`HTTP error! status: ${res.status}: ${errorText}`);
+      }
+      
+      const data = await res.json();
+      console.log('API Response:', { 
+        dataCount: data.length,
+        status: res.status, 
+        ok: res.ok,
+        difficulty,
+        url
+      });
+      
+      if (!Array.isArray(data)) {
+        console.error('API did not return an array:', data);
+        throw new Error('Expected an array of words from the API');
+      }
+      
+      // Log the first few words to verify difficulty
+      console.log('Sample words:', data.slice(0, 3).map(w => ({
+        word: w.word,
+        difficulty: w.difficulty,
+        length: w.word.length
+      })));
+      
+      // Just ensure word and hint exist, no additional filtering
+      const wordsToUse = data.filter(w => w && w.word && w.hint);
+      
+      // Process the words
+      const finalWords = wordsToUse
+        .filter(w => w && w.word && w.hint)
+        .map(w => {
+          const wordObj = {
+            word: String(w.word).toUpperCase().trim(),
+            hint: String(w.hint).trim()
+          };
+          console.log('Processing word:', wordObj);
+          return wordObj;
+        });
+
+      if (finalWords.length === 0) {
+        throw new Error('No valid words received from the API');
+      }
+      
+      wordsList.current = shuffleArray(finalWords);
+      currentWordIndex.current = -1;
+      startNewGame();
+    } catch (err) {
+      console.error("Failed to fetch words:", err);
+      setGameState(prev => ({ ...prev, status: "error", error: err.message }));
+    }
+  });
+
+  // Load words when component mounts or difficulty changes
   useEffect(() => {
     const fetchWordsByDifficulty = async () => {
       try {
@@ -170,6 +256,8 @@ function PuzzleGame() {
           localStorage.setItem("esx_current_streak", newCurrentStreak);
           localStorage.setItem("esx_max_streak", newMaxStreak);
 
+          updateScoreOnServer(user.userId, newCurrentStreak);
+
           return {
             ...prev,
             status: "won",
@@ -191,6 +279,30 @@ function PuzzleGame() {
   }, [gameState]);
 
   const { currentWord, guessed, wrongGuesses, status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
+
+  const updateScoreOnServer = async (userId, score) => {
+  try {
+    const res = await fetch(`${API_URL}${API_PREFIX}/user/score`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, score }),
+    });
+
+    const data = await res.json();
+    console.log("Score updated:", data);
+  } catch (err) {
+    console.error("Failed to update score:", err);
+  }
+};
+
+
+  // Debug info
+  console.log('Current game state:', {
+    status,
+    currentWord: gameState.currentWord,
+    wordsListLength: wordsList.current?.length,
+    currentWordIndex: currentWordIndex.current
+  });
 
   if (status === "loading") {
     return (
@@ -248,10 +360,11 @@ function PuzzleGame() {
         <h1 className="mb-2 text-3xl font-bold text-center text-blue-600">
           ESX Word Puzzle
         </h1>
-        
-        <div className="flex items-center justify-between p-4 mb-6 rounded-lg bg-gray-50">
-          <div className="text-lg font-medium">
-            <span className="text-gray-600">Wins:</span> {wins}
+
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-lg">
+            <span className="font-semibold"> {user.username}</span> <br></br> 
+            <span className="font-semibold">Wins:</span> {wins}
           </div>
           <div className="text-lg font-medium">
             <span className="text-gray-600">Current Streak:</span> {currentStreak} 
