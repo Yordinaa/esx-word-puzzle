@@ -57,6 +57,7 @@ function PuzzleGame() {
     setUser({ username: data.username, userId: data.userId });
   };
 
+
   // Fetch words based on selected difficulty
   const fetchWords = useRef(async () => {
     if(!user.username || !user.userId) return;
@@ -295,7 +296,7 @@ function PuzzleGame() {
     }
   }, [gameState,user.username, user.userId]);
 
-  const {status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
+  const {status, showHint, score, currentStreak, maxStreak, skipped } = gameState;
 
   if (!user.username || !user.userId) {
     return (
@@ -410,7 +411,7 @@ function PuzzleGame() {
         <div className="flex items-center justify-between mb-6">
           <div className="text-lg">
             <span className="font-semibold"> {user.username}</span> <br></br> 
-            <span className="font-semibold">Wins:</span> {wins}
+            <span className="font-semibold">Wins:</span> {score}
           </div>
           <div className="text-lg font-medium">
             <span className="text-gray-600">Current Streak:</span> {currentStreak} 
