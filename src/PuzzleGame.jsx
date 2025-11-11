@@ -5,12 +5,12 @@ import Output from "./components/Output";
 
 const MAX_WRONG_GUESSES = 6;
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-  // In production, we don't need a prefix because Vercel handles the routing
-  // In development, we use the full path including /api
-  const API_PREFIX = import.meta.env.DEV ? '/api' : '/api';
 
-// 
+
+const API_URL ="http://localhost:3000";
+const API_PREFIX = import.meta.env.DEV ? '/api' : '/api';
+
+ 
 // Fisher-Yates shuffle
 const shuffleArray = (array) => {
   const shuffled = [...array];
@@ -20,6 +20,8 @@ const shuffleArray = (array) => {
   }
   return shuffled;
 };
+
+
 
 function PuzzleGame() {
   const [gameState, setGameState] = useState({
@@ -33,12 +35,23 @@ function PuzzleGame() {
     maxStreak: Number(localStorage.getItem("esx_max_streak") || 0),
     skipped: Number(localStorage.getItem("esx_skipped") || 0),
   });
+ 
+  const [user, setUser] = useState({
+  username: localStorage.getItem("username") || "",
+  userId: localStorage.getItem("userId") || "",
+});
+  const [tempName, setTempName] = useState("");
+
+
 
   const wordsList = useRef([]);
   const currentWordIndex = useRef(-1);
-
+   
+  
   // ✅ Fetch all words once
   useEffect(() => {
+    if(!user.username || !user.userId) return;
+
     const fetchWords = async () => {
       try {
         const url = `${API_URL}${API_PREFIX}/wordbatch`;
@@ -90,7 +103,7 @@ function PuzzleGame() {
       }
     };
     fetchWords();
-  }, []);
+  }, [user.username, user.userId]);
 
   const startNewGame = () => {
     if (!wordsList.current.length) return;
@@ -123,6 +136,22 @@ function PuzzleGame() {
     startNewGame();
   };
 
+  const updateScoreOnServer = async (userId, score) => {
+  try {
+    const res = await fetch(`${API_URL}${API_PREFIX}/user/score`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, score }),
+    });
+
+    const data = await res.json();
+    console.log("Score updated:", data);
+  } catch (err) {
+    console.error("Failed to update score:", err);
+  }
+};
+
+
   // ✅ Check win/loss
   useEffect(() => {
     if (!gameState.currentWord || gameState.status !== "playing") return;
@@ -143,6 +172,8 @@ function PuzzleGame() {
           localStorage.setItem("esx_current_streak", newCurrentStreak);
           localStorage.setItem("esx_max_streak", newMaxStreak);
 
+          updateScoreOnServer(user.userId, newCurrentStreak);
+
           return {
             ...prev,
             status: "won",
@@ -156,7 +187,7 @@ function PuzzleGame() {
         }
       });
     }
-  }, [gameState.guessed, gameState.wrongGuesses, gameState.currentWord, gameState.status]);
+  }, [gameState.guessed, gameState.wrongGuesses, gameState.currentWord, gameState.status, user.userId]);
 
   // ✅ Keyboard support
   useEffect(() => {
@@ -201,6 +232,56 @@ function PuzzleGame() {
 
   const { currentWord, guessed, wrongGuesses, status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
 
+  //user setup
+if (!user.username || !user.userId) {
+
+  const handleSetName = async () => {
+    if (!tempName.trim()) return;
+ try{
+    const res = await fetch(`${API_URL}${API_PREFIX}/user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: tempName }),
+    });
+    const data = await res.json();
+
+    localStorage.setItem("username", data.username);
+    localStorage.setItem("userId", data.userId);
+    setUser({ username: data.username, userId: data.userId });
+  }catch(err){
+    console.error("Error creating user:", err);
+  }
+
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-sm">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">
+          Welcome to ESX Word Puzzle 🎯
+        </h2>
+        <p className="mb-4 text-gray-600">
+          Enter your name to start and join the leaderboard:
+        </p>
+        <input
+          type="text"
+          value={tempName}
+          onChange={(e) => setTempName(e.target.value)}
+          className="border rounded px-3 py-2 w-full mb-4 text-center"
+          placeholder="Your name"
+        />
+        <button
+          onClick={handleSetName}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Start Game
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
   if (status === "loading") return <div className="loading">Loading game...</div>;
 
   // ✅ All words completed
@@ -234,6 +315,7 @@ function PuzzleGame() {
 
         <div className="flex items-center justify-between mb-6">
           <div className="text-lg">
+            <span className="font-semibold"> {user.username}</span> <br></br> 
             <span className="font-semibold">Wins:</span> {wins}
           </div>
           <div className="text-lg">
