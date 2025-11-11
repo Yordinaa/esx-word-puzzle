@@ -295,7 +295,7 @@ function PuzzleGame() {
     }
   }, [gameState,user.username, user.userId]);
 
-  const { currentWord, guessed, wrongGuesses, status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
+  const {status, showHint, wins, currentStreak, maxStreak, skipped } = gameState;
 
   if (!user.username || !user.userId) {
     return (
@@ -349,13 +349,13 @@ function PuzzleGame() {
     currentWordIndex: currentWordIndex.current
   });
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl font-semibold">Loading game...</div>
-      </div>
-    );
-  }
+  // if (status === "loading") {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <div className="text-xl font-semibold">Loading game...</div>
+  //     </div>
+  //   );
+  // }
 
   if (gameState.status === "error") {
     return (
