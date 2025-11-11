@@ -469,16 +469,18 @@ const fetchUserScore = async (userId) => {
         </h1>
 
         <div className="flex items-center justify-between mb-6">
-          <div className="text-lg">
-            <span className="font-semibold"> {user.username}</span> <br></br> 
-            <span className="font-semibold">Wins:</span> {Math.max(user.uscore, gameState.currentStreak)}
-          </div>
-          <div className="text-lg font-medium">
-            <span className="text-gray-600">Current Streak:</span> {currentStreak} 
-            <span className="mx-2 text-gray-300">|</span>
-            <span className="text-gray-600">Best Streak:</span> {maxStreak}
-          </div>
-        </div>
+  <div className="text-lg">
+    <div className="font-semibold">{user.username}</div>
+    <div>
+      <span className="font-semibold">Wins:</span> {Math.max(user.uscore, gameState.currentStreak)}
+    </div>
+    <div className="text-sm text-gray-600">
+      <span>Current Streak: {currentStreak}</span> 
+      <span className="mx-2">|</span>
+      <span>Best Streak: {maxStreak}</span>
+    </div>
+  </div>
+</div>
         
         <div className="flex flex-col items-center justify-center mb-6">
           <div className="relative w-full max-w-xs">
