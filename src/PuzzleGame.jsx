@@ -35,8 +35,15 @@ function PuzzleGame() {
   const [user, setUser] = useState({
   username: localStorage.getItem("username") || "",
   userId: localStorage.getItem("userId") || "",
-  score: Number(localStorage.getItem("wins") || 0),
+  uuscore: Number(localStorage.getItem("wins") || 0),
 });
+
+useEffect(() => {
+  if(user.userId) {
+    fetchUserScore(user.userId);
+  }
+},[user.userId]);
+
   const [tempName, setTempName] = useState("");
 
 
@@ -56,7 +63,7 @@ function PuzzleGame() {
     localStorage.setItem("username", data.username);
     localStorage.setItem("userId", data.userId);
     localStorage.setItem("wins", data.uscore);
-    setUser({ username: data.username, userId: data.userId, score: data.uscore});
+    setUser({ username: data.username, userId: data.userId, uscore: data.uscore});
   };
 
 
@@ -298,7 +305,7 @@ function PuzzleGame() {
     }
   }, [gameState,user.username, user.userId]);
 
-  const {status, showHint, score, currentStreak, maxStreak, skipped } = gameState;
+  const {status, showHint, uscore, currentStreak, maxStreak, skipped } = gameState;
 
   if (!user.username || !user.userId) {
     return (
@@ -342,6 +349,21 @@ function PuzzleGame() {
     console.error("Failed to update score:", err);
   }
 };
+
+const fetchUserScore = async (userId) => {
+  console.log("Fetching score for userId:", userId);
+  try {
+    const res = await fetch(`${API_URL}${API_PREFIX}/user/${userId}/score`);
+    if (!res.ok) throw new Error("Failed to fetch score");
+    const data = await res.json();
+    console.log("Fetched user score:", data);
+    localStorage.setItem("wins", data.score || 0);
+    setUser((prev) => ({ ...prev, uscore: data.score || 0 }));
+  } catch (err) {
+    console.error("Error fetching user score:", err);
+  }
+};
+
 
 
   // Debug info
@@ -413,7 +435,7 @@ function PuzzleGame() {
         <div className="flex items-center justify-between mb-6">
           <div className="text-lg">
             <span className="font-semibold"> {user.username}</span> <br></br> 
-            <span className="font-semibold">Wins:</span> {score}
+            <span className="font-semibold">Wins:</span> {uscore}
           </div>
           <div className="text-lg font-medium">
             <span className="text-gray-600">Current Streak:</span> {currentStreak} 
