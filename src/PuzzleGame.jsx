@@ -526,9 +526,7 @@ const fetchUserScore = async (userId) => {
               )}
             </div>
 
-            <div className="flex justify-end mt-4 text-sm text-gray-600">
-              <div>Words Skipped: {skipped}</div>
-            </div>
+
 
             <div className="flex justify-center mt-6">
               <button
@@ -550,7 +548,9 @@ const fetchUserScore = async (userId) => {
             <p>Word {currentWordIndex.current + 1} of {wordsList.current.length}</p>
           </div>
           <p className="mt-2 text-xs text-center text-gray-400">
-            Press keyboard letters to guess | Press H to {showHint ? 'hide' : 'show'} hint
+            Press keyboard letters to guess | Press H to {showHint ? 'hide' : 'show'} hint | 
+            word skipped: {skipped}
+
           </p>
         </div>
       </div>
