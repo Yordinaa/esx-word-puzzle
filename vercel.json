@@ -18,7 +18,7 @@
     },
     {
       "src": "/api/wordbatch",
-      "dest": "https://wordpuzzle-backend-production.up.railway.app/api/wordbatch",
+      "dest": "https://https://wordpuzzle-backend-production-6ce7.up.railway.app/api/wordbatch",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",

@@ -309,8 +309,8 @@ useEffect(() => {
   if (!user.username || !user.userId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-sm">
-          <h2 className="text-2xl font-bold mb-4 text-blue-600">
+        <div className="max-w-sm p-8 text-center bg-white rounded-lg shadow-lg">
+          <h2 className="mb-4 text-2xl font-bold text-blue-600">
             Welcome to ESX Word Puzzle 🎯
           </h2>
           <p className="mb-4 text-gray-600">
@@ -320,12 +320,12 @@ useEffect(() => {
             type="text"
             value={tempName}
             onChange={(e) => setTempName(e.target.value)}
-            className="border rounded px-3 py-2 w-full mb-4 text-center"
+            className="w-full px-3 py-2 mb-4 text-center border rounded"
             placeholder="Your name"
           />
           <button
             onClick={handleSetName}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
           >
             Start Game
           </button>
@@ -536,7 +536,7 @@ const fetchUserScore = async (userId) => {
                     : 'bg-blue-500 hover:bg-blue-600'
                 }`}
               >
-                {gameState.status === "playing" ? 'Skip Word' : 'New Game'}
+                {gameState.status === "playing" ? 'Skip Word' : 'Next Word'}
               </button>
             </div>
           </div>

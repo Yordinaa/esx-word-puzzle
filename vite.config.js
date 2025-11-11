@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://wordpuzzle-backend-production.up.railway.app',
+        target: 'https://wordpuzzle-backend-production-6ce7.up.railway.app',
         changeOrigin: true,
         secure: false
       }
