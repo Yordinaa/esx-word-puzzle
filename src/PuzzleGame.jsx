@@ -7,7 +7,6 @@ const MAX_WRONG_GUESSES = 6;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const API_PREFIX = import.meta.env.DEV ? '/api' : '/api';
 
-// Fisher-Yates shuffle"
 const shuffleArray = (array) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -20,13 +19,13 @@ const shuffleArray = (array) => {
 
 
 function PuzzleGame() {
-  const [difficulty, setDifficulty] = useState('beginner'); // Add difficulty state
+  const [difficulty, setDifficulty] = useState('beginner');
   const [gameState, setGameState] = useState({
     currentWord: null,
     guessed: new Set(),
     wrongGuesses: new Set(),
-    status: "loading", // loading | playing | won | lost | finished
-    showHint: true, // Show hints by default
+    status: "loading",
+    showHint: true,
     wins: Number(localStorage.getItem("esx_wins") || 0),
     currentStreak: Number(localStorage.getItem("esx_current_streak") || 0),
     maxStreak: Number(localStorage.getItem("esx_max_streak") || 0),
@@ -136,9 +135,54 @@ function PuzzleGame() {
 
   // Load words when component mounts or difficulty changes
   useEffect(() => {
-    setGameState(prev => ({ ...prev, status: "loading" }));
+    const fetchWordsByDifficulty = async () => {
+      try {
+        setGameState(prev => ({ ...prev, status: "loading" }));
+        
+        const url = `${API_URL}${API_PREFIX}/wordbatch?difficulty=${encodeURIComponent(difficulty)}`;
+        console.log('Fetching words from:', url);
+        
+        const res = await fetch(url, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}: ${errorText}`);
+        }
+        
+        const data = await res.json();
+        
+        if (!Array.isArray(data)) {
+          throw new Error('Expected an array of words from the API');
+        }
+        
+        const wordsToUse = data.filter(w => w && w.word && w.hint);
+        const finalWords = wordsToUse.map(w => ({
+          word: String(w.word).toUpperCase().trim(),
+          hint: String(w.hint || '').trim()
+        }));
+
+        if (finalWords.length === 0) {
+          throw new Error('No valid words received for the selected difficulty');
+        }
+        
+        wordsList.current = shuffleArray(finalWords);
+        currentWordIndex.current = -1;
+        startNewGame();
+      } catch (err) {
+        console.error("Failed to fetch words:", err);
+        setGameState(prev => ({ 
+          ...prev, 
+          status: "error", 
+          error: err.message 
+        }));
+      }
+    };
+
+    // Store the function in the ref and call it
+    fetchWords.current = fetchWordsByDifficulty;
     fetchWords.current();
-    // Add difficulty to the dependency array to refetch when it changes
   }, [difficulty]);
 
   const startNewGame = () => {
@@ -157,12 +201,8 @@ function PuzzleGame() {
       return;
     }
     
-    // Check if we've reached the end of the word list
     if (currentWordIndex.current + 1 >= wordsList.current.length) {
-      console.log('Resetting word index, reached end of words list');
       currentWordIndex.current = -1;
-      
-      // If we've gone through all words, mark as finished
       setGameState(prev => ({
         ...prev,
         status: "finished",
@@ -170,27 +210,11 @@ function PuzzleGame() {
       return;
     }
     
-    // Move to the next word
     currentWordIndex.current += 1;
     const currentWordObj = wordsList.current[currentWordIndex.current];
     
     if (!currentWordObj) {
       console.error('Invalid word object at index:', currentWordIndex.current);
-      return;
-    }
-    
-    console.log('Setting up new game with word:', currentWordObj);
-
-    console.log('Setting up game with word:', currentWordObj);
-    
-    // Ensure we have a valid word object
-    if (!currentWordObj || !currentWordObj.word) {
-      console.error('Invalid word object:', currentWordObj);
-      setGameState(prev => ({
-        ...prev,
-        status: "error",
-        error: 'Failed to load word. Please try again.'
-      }));
       return;
     }
 
@@ -203,7 +227,7 @@ function PuzzleGame() {
       guessed: new Set(),
       wrongGuesses: new Set(),
       status: "playing",
-      showHint: true, // Show hint by default
+      showHint: true,
     }));
   };
 
@@ -227,8 +251,7 @@ function PuzzleGame() {
     startNewGame();
   };
 
-  const toggleHint = () =>
-    setGameState((prev) => ({ ...prev, showHint: !prev.showHint }));
+  const toggleHint = () => setGameState((prev) => ({ ...prev, showHint: !prev.showHint }));
 
   // Check win/loss conditions
   useEffect(() => {
@@ -265,7 +288,7 @@ function PuzzleGame() {
             ...prev, 
             status: "lost", 
             currentStreak: 0,
-            showHint: true // Show the correct word when lost
+            showHint: true
           };
         }
       });
@@ -333,43 +356,36 @@ function PuzzleGame() {
       </div>
     );
   }
-  if (gameState.status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl font-semibold">Loading game...</div>
-      </div>
-    );
-  }
-  
+
   if (gameState.status === "error") {
-    console.log('Rendering error state:', gameState.error);
     return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
         <h1 className="mb-2 text-3xl font-bold text-center text-blue-600">
-        ESX Word Puzzle
-      </h1>
-      
-      <div className="flex flex-col items-center justify-center mb-6">
-        <div className="relative w-full max-w-xs">
-          <select
-            value={difficulty}
-            onChange={(e) => {
-              console.log('Difficulty changed to:', e.target.value);
-              setDifficulty(e.target.value);
-            }}
-            className="block w-full px-4 py-2 pr-8 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="beginner">Beginner (≤7 letters)</option>
-            <option value="intermediate">Intermediate (8-10 letters)</option>
-            <option value="advanced">Advanced (11+ letters)</option>
-          </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+          ESX Word Puzzle
+        </h1>
+        
+        <div className="flex flex-col items-center justify-center mb-6">
+          <div className="relative w-full max-w-xs">
+            <select
+              value={difficulty}
+              onChange={(e) => {
+                console.log('Difficulty changed to:', e.target.value);
+                setDifficulty(e.target.value);
+              }}
+              className="block w-full px-4 py-2 pr-8 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="beginner">Beginner (≤7 letters)</option>
+              <option value="intermediate">Intermediate (8-10 letters)</option>
+              <option value="advanced">Advanced (11+ letters)</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
+        
         <p className="mb-4 text-gray-700">
           {gameState.error || 'Failed to load words. Please try again later.'}
         </p>
@@ -379,21 +395,13 @@ function PuzzleGame() {
         >
           Retry
         </button>
-        <div className="p-4 mt-4 text-sm text-left bg-gray-100 rounded">
-          <p className="font-semibold">Debug Info:</p>
-          <p>Difficulty: {difficulty}</p>
-          <p>Words Loaded: {wordsList.current.length}</p>
-          <p>Check browser console for more details.</p>
-        </div>
       </div>
     );
   }
 
-  // Main game UI
   return (
     
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
-
       <div className="w-full max-w-2xl p-6 bg-white rounded-lg shadow-lg">
         <h1 className="mb-2 text-3xl font-bold text-center text-blue-600">
           ESX Word Puzzle
@@ -416,7 +424,10 @@ function PuzzleGame() {
             <select
               id="difficulty"
               value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
+              onChange={(e) => {
+                console.log('Difficulty changed to:', e.target.value);
+                setDifficulty(e.target.value);
+              }}
               className="block w-full px-4 py-2 pr-10 text-base border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="beginner">Beginner</option>
@@ -518,6 +529,6 @@ function PuzzleGame() {
       </div>
     </div>
   );
-};
+}
 
 export default PuzzleGame;
