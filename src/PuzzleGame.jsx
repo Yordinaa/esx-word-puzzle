@@ -304,7 +304,7 @@ useEffect(() => {
     }
   }, [gameState,user.username, user.userId]);
 
-  const {status, showHint, uscore, currentStreak, maxStreak, skipped } = gameState;
+  const {status, showHint, currentStreak, maxStreak, skipped } = gameState;
 
   if (!user.username || !user.userId) {
     return (
@@ -434,7 +434,7 @@ const fetchUserScore = async (userId) => {
         <div className="flex items-center justify-between mb-6">
           <div className="text-lg">
             <span className="font-semibold"> {user.username}</span> <br></br> 
-            <span className="font-semibold">Wins:</span> {uscore}
+            <span className="font-semibold">Wins:</span> {user.uscore}
           </div>
           <div className="text-lg font-medium">
             <span className="text-gray-600">Current Streak:</span> {currentStreak} 
